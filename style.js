@@ -22,6 +22,48 @@ const _style = [{
     "z-index": "10"
   }
 }, {
+  "selector": "node.attr-rich",
+  "style": {
+    "shape": "ellipse",
+    "background-color": "#2f6f9f",
+    "text-outline-color": "#2f6f9f"
+  }
+}, {
+  "selector": "node.attr-sparse",
+  "style": {
+    "shape": "rectangle",
+    "background-color": "#b35c32",
+    "text-outline-color": "#b35c32"
+  }
+}, {
+  "selector": ".hidden-semantic",
+  "style": {
+    "display": "none"
+  }
+}, {
+  "selector": "node.semantic-radar",
+  "style": {
+    "shape": "rectangle",
+    "width": "112px",
+    "height": "112px",
+    "background-color": "#ffffff",
+    "background-opacity": "1",
+    "background-image": "data(radarImage)",
+    "background-fit": "contain",
+    "background-width": "100%",
+    "background-height": "100%",
+    "border-width": "2px",
+    "border-color": "#1f78b4",
+    "content": "data(name)",
+    "font-size": "9px",
+    "text-valign": "bottom",
+    "text-halign": "center",
+    "text-margin-y": "8px",
+    "text-outline-color": "#1f78b4",
+    "text-outline-width": "1px",
+    "z-index": "20"
+  }
+}, {
   "selector": "node:selected",
   "style": {
     "border-width": "6px",
