@@ -7,18 +7,43 @@
   left: 0;
   top: 0;
   bottom: 0;
-  right: 12em; 
+  right: 0;
+}
+
+svg.cy {
+  pointer-events: none;
+  z-index: 2;
+}
+
+#cy {
+  z-index: 0;
 }
 
 .config {
   position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 10em;
+  left: 1em;
+  top: 1em;
+  width: 14em;
   background: rgba(0, 0, 0, 0.666);
   padding: 1em;
   color: #ffffff;
-  z-index: 1;
+  z-index: 3;
+}
+
+.control {
+  display: block;
+  margin-bottom: 0.9em;
+  font: 13px sans-serif;
+}
+
+.control input[type="range"] {
+  width: 100%;
+  margin-top: 0.5em;
+}
+
+.control output {
+  display: block;
+  margin-top: 0.25em;
+  text-align: right;
 }
 

@@ -83,6 +83,14 @@ const _style = [{
     "overlay-padding": "3px"
   }
 }, {
+  "selector": "edge.lens-edge-highlight",
+  "style": {
+    "line-color": "#ffd400",
+    "opacity": "0.95",
+    "width": "8px",
+    "z-index": "30"
+  }
+}, {
   "selector": "node.magic",
   "style": {
     // your magic lens effects for nodes go here! 

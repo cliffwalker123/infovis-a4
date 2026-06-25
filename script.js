@@ -152,14 +152,38 @@ function radarImageForNode(node, maxByAttribute) {
   return image;
 }
 
-function applySemanticZoom(cy, maxByAttribute) {
+function updateLensElement(lensState) {
+  const lens = document.getElementById("lens");
+
+  lens.setAttribute("cx", lensState.center.x);
+  lens.setAttribute("cy", lensState.center.y);
+  lens.setAttribute("r", lensState.radius);
+}
+
+function mousePosition(cy, event) {
+  const container = cy.container().getBoundingClientRect();
+  const original = event.originalEvent;
+
+  return {
+    x: original.clientX - container.left,
+    y: original.clientY - container.top,
+  };
+}
+
+function nodesInLens(cy, lensState) {
+  return cy.nodes().filter((node) => {
+    return isInCircle(lensState.center, lensState.radius, node.renderedPosition());
+  });
+}
+
+function applyVisualization(cy, maxByAttribute, lensState) {
   const level = semanticLevelFromZoom(cy.zoom());
   const richNodes = cy.nodes().filter((node) => node.data("attrCount") >= ATTRIBUTE_THRESHOLD);
   const sparseNodes = cy.nodes().filter((node) => node.data("attrCount") < ATTRIBUTE_THRESHOLD);
 
   cy.startBatch();
   cy.nodes().removeClass("hidden-semantic semantic-radar");
-  cy.edges().removeClass("hidden-semantic");
+  cy.edges().removeClass("hidden-semantic lens-edge-highlight");
 
   if (level === 0) {
     sparseNodes.addClass("hidden-semantic");
@@ -170,10 +194,29 @@ function applySemanticZoom(cy, maxByAttribute) {
     });
   }
 
+  const lensNodes = nodesInLens(cy, lensState)
+    .filter((node) => !node.hasClass("hidden-semantic"));
+
+  let radarNodes = cy.collection();
+
   if (level === 2) {
-    nodesInView(cy).forEach((node) => {
-      if (radarImageForNode(node, maxByAttribute)) {
-        node.addClass("semantic-radar");
+    radarNodes = radarNodes.union(nodesInView(cy));
+  }
+
+  if (lensState.showStarCharts) {
+    radarNodes = radarNodes.union(lensNodes);
+  }
+
+  radarNodes.forEach((node) => {
+    if (radarImageForNode(node, maxByAttribute)) {
+      node.addClass("semantic-radar");
+    }
+  });
+
+  if (lensState.highlightEdges) {
+    lensNodes.connectedEdges().forEach((edge) => {
+      if (!edge.hasClass("hidden-semantic")) {
+        edge.addClass("lens-edge-highlight");
       }
     });
   }
@@ -210,14 +253,40 @@ async function main() {
     node.addClass(node.data("attrCount") >= ATTRIBUTE_THRESHOLD ? "attr-rich" : "attr-sparse");
   });
 
-  const refreshSemanticZoom = _.throttle(() => {
-    applySemanticZoom(cy, maxByAttribute);
+  const showStarChartsControl = document.getElementById("show-star-charts");
+  const highlightLensEdgesControl = document.getElementById("highlight-lens-edges");
+  const lensRadiusControl = document.getElementById("lens-radius");
+  const lensRadiusValue = document.getElementById("lens-radius-value");
+  const lensState = {
+    center: { x: 50, y: 50 },
+    radius: Number(lensRadiusControl.value),
+    showStarCharts: showStarChartsControl.checked,
+    highlightEdges: highlightLensEdgesControl.checked,
+  };
+
+  updateLensElement(lensState);
+
+  const refreshVisualization = _.throttle(() => {
+    applyVisualization(cy, maxByAttribute, lensState);
   }, 150);
+
+  const syncControls = () => {
+    lensState.showStarCharts = showStarChartsControl.checked;
+    lensState.highlightEdges = highlightLensEdgesControl.checked;
+    lensState.radius = Number(lensRadiusControl.value);
+    lensRadiusValue.value = lensState.radius;
+    updateLensElement(lensState);
+    refreshVisualization();
+  };
+
+  showStarChartsControl.addEventListener("change", syncControls);
+  highlightLensEdgesControl.addEventListener("change", syncControls);
+  lensRadiusControl.addEventListener("input", syncControls);
   
   cy.on("zoom", e => {
     const zoom_level = cy.zoom();
     console.log(`Zoom level: ${zoom_level}`);
-    refreshSemanticZoom();
+    refreshVisualization();
     
     /* 
       Your code goes here! 
@@ -231,19 +300,14 @@ async function main() {
 
   });
 
-  cy.on("pan resize", refreshSemanticZoom);
-  layout.on("layoutstop", refreshSemanticZoom);
-  refreshSemanticZoom();
+  cy.on("pan resize", refreshVisualization);
+  layout.on("layoutstop", refreshVisualization);
+  refreshVisualization();
 
   cy.on("mousemove", _.throttle(e => {
-    const mouse = { x: e.originalEvent.x, y: e.originalEvent.y };
-    console.log(`Mouse position: [x: ${mouse.x}, y: ${mouse.y}]`);
-
-    cy.nodes().forEach((n) => {
-      const node = n.renderedPosition(); // Careful: other position functions may invoke different coordinate systems
-
-      // console.log(`Node position: [x: ${node.x}, y: ${node.y}]`);
-    });
+    lensState.center = mousePosition(cy, e);
+    updateLensElement(lensState);
+    refreshVisualization();
     
     /* 
       Your code also goes here! 
